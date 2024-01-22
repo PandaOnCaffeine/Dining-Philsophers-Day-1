@@ -9,83 +9,103 @@ namespace Dining_Philsophers_Day_1
 {
     internal class Program
     {
-        static Random _rng = new Random();
-        static object[] _forks = new object[5];
-        static void Main(string[] args)
+        static object[] forks = new object[5];
+
+        static void Main()
         {
-            Thread[] philsophers = new Thread[5];
-            for (int i = 0; i < philsophers.Length; i++)
+            for (int i = 0; i < 5; i++)
             {
-                philsophers[i] = new Thread(() => PhilsophersLife(i));
-                philsophers[i].Start();
+                forks[i] = new object();
             }
+
+            for (int i = 0; i < 5; i++)
+            {
+                int philosopherNumber = i + 1;
+                Thread philosopherThread = new Thread(() => PhilosopherLife(philosopherNumber));
+                philosopherThread.Start();
+            }
+
             Console.ReadLine();
         }
-        static void PhilsophersLife(int nr)
+        static void PhilosopherLife(int philosopherNumber)
         {
-            int rightFork;
-            int leftFork;
-            int philsopherNr;
-            switch (nr)
-            {
-                case 0:
-                    rightFork = 4;
-                    leftFork = 0;
-                    philsopherNr = 0;
-                    break;
-                case 1:
-                    rightFork = 0;
-                    leftFork = 1;
-                    philsopherNr = 1;
-                    break;
-                case 2:
-                    rightFork = 1;
-                    leftFork = 2;
-                    philsopherNr = 2;
-                    break;
-                case 3:
-                    rightFork = 2;
-                    leftFork = 3;
-                    philsopherNr = 3;
-                    break;
-                case 4:
-                    rightFork = 3;
-                    leftFork = 4;
-                    philsopherNr = 4;
-                    break;
-                default:
-                    rightFork = 0;
-                    leftFork = 0;
-                    philsopherNr = 0;
-                    break;
-            }
             while (true)
             {
-                Think(philsopherNr);
-                Eat(rightFork, leftFork, philsopherNr);
+                Think(philosopherNumber);
+                PickUpForks(philosopherNumber);
+                Eat(philosopherNumber);
+                PutDownForks(philosopherNumber);
             }
         }
-        static void Think(int philsopherNr)
+        static void Think(int philosopherNumber)
         {
-            int thinkTime = _rng.Next(1000, 5000);
-            Console.WriteLine("Philsopher " + philsopherNr + " is now Thinking For:" + (thinkTime/1000) + " Seconds");
-
-            Thread.Sleep(thinkTime);
+            Console.WriteLine($"Philosopher {philosopherNumber} is thinking.");
+            Thread.Sleep(new Random().Next(1000, 3000));
         }
-        static void Eat(int rightFork, int leftFork, int philsopherNr)
+        static void PickUpForks(int philosopherNumber)
         {
-            if (_forks[rightFork] == false && _forks[leftFork] == false)
+            //false for left fork || true for right fork
+            int leftFork = ForkPicker(philosopherNumber, false); 
+            int rightFork = ForkPicker(philosopherNumber, true);
+
+            if (philosopherNumber % 2 == 0)
             {
-                lock (_forks[1])
+                Monitor.Enter(forks[rightFork]);
+                Console.WriteLine($"Philosopher {philosopherNumber} picks up right fork. {leftFork}");
+
+                Monitor.Enter(forks[leftFork]);
+                Console.WriteLine($"Philosopher {philosopherNumber} picks up left fork. {rightFork}");
+            }
+            else
+            {
+                Monitor.Enter(forks[leftFork]);
+                Console.WriteLine($"Philosopher {philosopherNumber} picks up left fork. {leftFork}");
+
+                Monitor.Enter(forks[rightFork]);
+                Console.WriteLine($"Philosopher {philosopherNumber} picks up right fork. {rightFork}");
+            }
+        }
+
+        static void Eat(int philosopherNumber)
+        {
+            Console.WriteLine($"Philosopher {philosopherNumber} is eating.");
+            Thread.Sleep(3000); 
+        }
+
+        static void PutDownForks(int philosopherNumber)
+        {
+            //false for left fork || true for right fork
+            int leftFork = ForkPicker(philosopherNumber,false);
+            int rightFork = ForkPicker(philosopherNumber, true);
+
+            Monitor.Exit(forks[leftFork]);
+            Console.WriteLine($"Philosopher {philosopherNumber} puts down left fork. {leftFork}");
+
+            Monitor.Exit(forks[rightFork]);
+            Console.WriteLine($"Philosopher {philosopherNumber} puts down right fork. {rightFork}");
+
+            Thread.Sleep(500);
+        }
+
+        static int ForkPicker(int philosopherNumber, bool rightFork)
+        {
+            int forkNr;
+            if (!rightFork)
+            {
+                forkNr = philosopherNumber -1;
+            }
+            else
+            {
+                if (philosopherNumber == 1)
                 {
-                    _forks[rightFork] = true;
-                    _forks[leftFork] = true;
-                    Console.WriteLine("Philsopher " + philsopherNr + " is now Eating");
-                    Thread.Sleep(3000);
-                    _forks[rightFork] = false;
-                    _forks[leftFork] = false;
+                    forkNr = 4;
+                }
+                else
+                {
+                    forkNr = philosopherNumber -2;
                 }
             }
+            return forkNr;
         }
     }
 }
