@@ -10,7 +10,9 @@ namespace Dining_Philsophers_Day_1
     internal class Program
     {
         static object[] forks = new object[5];
-
+        static int _eatCount = 0;
+        static object _eatCountLock = new object();
+        static object _writeLock = new object();
         static void Main()
         {
             for (int i = 0; i < 5; i++)
@@ -39,50 +41,55 @@ namespace Dining_Philsophers_Day_1
         }
         static void Think(int philosopherNumber)
         {
-            Console.WriteLine($"Philosopher {philosopherNumber} is thinking.");
+            WriteAt($"Philosopher {philosopherNumber} is thinking.", 40, "||");
+
             Thread.Sleep(new Random().Next(1000, 3000));
         }
         static void PickUpForks(int philosopherNumber)
         {
             //false for left fork || true for right fork
-            int leftFork = ForkPicker(philosopherNumber, false); 
+            int leftFork = ForkPicker(philosopherNumber, false);
             int rightFork = ForkPicker(philosopherNumber, true);
 
             if (philosopherNumber % 2 == 0)
             {
                 Monitor.Enter(forks[rightFork]);
-                Console.WriteLine($"Philosopher {philosopherNumber} picks up right fork. {leftFork}");
+                WriteAt($"Philosopher {philosopherNumber} picks up right fork. {leftFork}", 40, "||");
 
                 Monitor.Enter(forks[leftFork]);
-                Console.WriteLine($"Philosopher {philosopherNumber} picks up left fork. {rightFork}");
+                WriteAt($"Philosopher {philosopherNumber} picks up left fork. {rightFork}", 40, "||");
             }
             else
             {
                 Monitor.Enter(forks[leftFork]);
-                Console.WriteLine($"Philosopher {philosopherNumber} picks up left fork. {leftFork}");
+                WriteAt($"Philosopher {philosopherNumber} picks up left fork. {leftFork}", 40, "||");
 
                 Monitor.Enter(forks[rightFork]);
-                Console.WriteLine($"Philosopher {philosopherNumber} picks up right fork. {rightFork}");
+                WriteAt($"Philosopher {philosopherNumber} picks up right fork. {rightFork}", 40, "||");
             }
         }
 
         static void Eat(int philosopherNumber)
         {
-            Console.WriteLine($"Philosopher {philosopherNumber} is eating.");
-            Thread.Sleep(3000); 
+            lock (_eatCountLock)
+            {
+                _eatCount++;
+                WriteAt($"Philosopher {philosopherNumber} is eating.", 40, $"|| Eat Count: {_eatCount}");
+            }
+            Thread.Sleep(3000);
         }
 
         static void PutDownForks(int philosopherNumber)
         {
             //false for left fork || true for right fork
-            int leftFork = ForkPicker(philosopherNumber,false);
+            int leftFork = ForkPicker(philosopherNumber, false);
             int rightFork = ForkPicker(philosopherNumber, true);
 
             Monitor.Exit(forks[leftFork]);
-            Console.WriteLine($"Philosopher {philosopherNumber} puts down left fork. {leftFork}");
+            WriteAt($"Philosopher {philosopherNumber} puts down left fork. {leftFork}🍴 ", 40, $"||");
 
             Monitor.Exit(forks[rightFork]);
-            Console.WriteLine($"Philosopher {philosopherNumber} puts down right fork. {rightFork}");
+            WriteAt($"Philosopher {philosopherNumber} puts down right fork. {rightFork}🍴", 40, $"||");
 
             Thread.Sleep(500);
         }
@@ -92,7 +99,7 @@ namespace Dining_Philsophers_Day_1
             int forkNr;
             if (!rightFork)
             {
-                forkNr = philosopherNumber -1;
+                forkNr = philosopherNumber - 1;
             }
             else
             {
@@ -102,10 +109,28 @@ namespace Dining_Philsophers_Day_1
                 }
                 else
                 {
-                    forkNr = philosopherNumber -2;
+                    forkNr = philosopherNumber - 2;
                 }
             }
             return forkNr;
+        }
+        static void WriteAt(string startText, int x, string text)
+        {
+            lock (_writeLock)
+            {
+                Console.Write(startText);
+
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                int currentY = Console.CursorTop;
+
+                Console.SetCursorPosition(x, currentY);
+                Console.Write(text);
+
+                // Move to the next line
+                Console.SetCursorPosition(0, currentY + 1);
+
+                Console.ResetColor();
+            }
         }
     }
 }
