@@ -86,10 +86,10 @@ namespace Dining_Philsophers_Day_1
             int rightFork = ForkPicker(philosopherNumber, true);
 
             Monitor.Exit(forks[leftFork]);
-            WriteAt($"Philosopher {philosopherNumber} puts down left fork. {leftFork}🍴 ", 40, $"||");
+            WriteAt($"Philosopher {philosopherNumber} puts down left fork. {leftFork}", 40, $"||");
 
             Monitor.Exit(forks[rightFork]);
-            WriteAt($"Philosopher {philosopherNumber} puts down right fork. {rightFork}🍴", 40, $"||");
+            WriteAt($"Philosopher {philosopherNumber} puts down right fork. {rightFork}", 40, $"||");
 
             Thread.Sleep(500);
         }
